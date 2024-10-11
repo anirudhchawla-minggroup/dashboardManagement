@@ -18,9 +18,12 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+    - name: Print SSH host
+      run: echo "SSH Host is: ${{ secrets.SSH_HOST }}"
+
     - name: Deploy to server
       run: |
-        ssh apple@${{ secrets.SSH_HOST }} '
+        sudo ssh apple@${{ secrets.SSH_HOST }} '
           cd Downloads/ming_group_projects/dashboardManagement &&
           git pull origin main
         '
