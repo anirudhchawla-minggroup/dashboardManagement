@@ -70,8 +70,7 @@ def fetch_pdfs(request):
 
             # Call your function with the extracted parameters
             time.sleep(2)
-            message = "Done Successfully testing"
-            #fetch_filtered_emails(keyword,folder, since_date, before_date)
+            message = fetch_filtered_emails(keyword,folder, since_date, before_date)
             logger.info(f"{folder}, {from_date}, {to_date}")
             return JsonResponse({'message': message})
         except Exception as e:
