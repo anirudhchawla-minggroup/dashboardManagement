@@ -1,0 +1,26 @@
+name: Deploy to MacBook Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install SSH agent
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Deploy to server
+      run: |
+        ssh -o StrictHostKeyChecking=no apple@${{ secrets.SSH_HOST }} '
+          cd Downloads/ming_group_projects/dashboardManagement &&
+          git pull origin main
+        '
