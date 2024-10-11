@@ -307,7 +307,9 @@ def fetch_filtered_emails(keyword,folder, since_date, before_date):
         print("pdf_files")
         if len(pdf_files) == 0:
             return 'No Data Found'
-        call_google_apps_script(os.getenv("GOOGLE_DRIVE_BASE_FOLDER_ID"),folder,pdf_files)
+        message = call_google_apps_script(os.getenv("GOOGLE_DRIVE_BASE_FOLDER_ID"),folder,pdf_files)
+        if message == "failure":
+            return
         # Logout from the server
         mail.logout()
         print("Logged out successfully")
