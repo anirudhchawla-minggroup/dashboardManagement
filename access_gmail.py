@@ -261,7 +261,16 @@ def fetch_filtered_emails(keyword,folder, since_date, before_date):
         print("Connected to IMAP server")
 
         # Log in to your account
-        mail.login(USERNAME, PASSWORD)
+        # Check if either the username or password is missing
+        if USERNAME is None or PASSWORD is None:
+            raise EnvironmentError("GMAIL_USERNAME or GMAIL_PASSWORD is not set in the environment variables.")
+
+        # Proceed with the login if both are available
+        try:
+            mail.login(USERNAME, PASSWORD)
+            print("Logged in successfully")
+        except Exception as e:
+            print(f"Failed to login: {e}")
         print("Logged in successfully")
 
         # Select the "All Mail" mailbox to encompass all emails across labels
