@@ -305,6 +305,8 @@ def fetch_filtered_emails(keyword,folder, since_date, before_date):
         for msg in emails:
             save_pdf_attachments(msg, mailbox,keyword,folder,pdf_files)
         print("pdf_files")
+        if len(pdf_files) == 0:
+            return 'No Data Found'
         call_google_apps_script(os.getenv("GOOGLE_DRIVE_BASE_FOLDER_ID"),folder,pdf_files)
         # Logout from the server
         mail.logout()
