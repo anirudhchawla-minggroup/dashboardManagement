@@ -26,3 +26,4 @@ def call_google_apps_script(base_folder_id,folder_name,pdf_files):
         return result
     else:
         print(f"Error calling Google Apps Script: {response.status_code}")
+        return f"Error calling Google Apps Script: {response.status_code}"
