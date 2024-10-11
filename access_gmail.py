@@ -259,7 +259,8 @@ def fetch_filtered_emails(keyword,folder, since_date, before_date):
         # Connect to Gmail's IMAP server
         mail = imaplib.IMAP4_SSL("imap.gmail.com", 993)
         print("Connected to IMAP server")
-
+        logger.info(USERNAME)
+        logger.info(PASSWORD)
         # Log in to your account
         # Check if either the username or password is missing
         if USERNAME is None or PASSWORD is None:
