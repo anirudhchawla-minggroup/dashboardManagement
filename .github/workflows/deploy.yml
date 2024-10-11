@@ -24,7 +24,7 @@ jobs:
 
     - name: Deploy to server
       run: |
-        sudo ssh apple@${{ secrets.SSH_HOST }} '
+        sudo ssh apple@192.168.0.10 '
           cd Downloads/ming_group_projects/dashboardManagement &&
           git pull origin main
         '
