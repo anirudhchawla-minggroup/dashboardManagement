@@ -1,0 +1,30 @@
+<div>
+    <!-- Search Bar -->
+    <input type="text" id="logSearch" placeholder="Search logs..." onkeyup="searchLogs()" style="margin-bottom: 10px; padding: 8px; width: 100%; border-radius: 4px; border: 1px solid #ccc;">
+
+    {% if log_entries %}
+    <table id="logsTable">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Company Name</th>
+                <th>From Date</th>
+                <th>To Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in log_entries %}
+            <tr>
+                <td>{{ entry.timestamp }}</td>
+                <td>{{ entry.folder }}</td>
+                <td>{{ entry.from_date }}</td>
+                <td>{{ entry.to_date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No logs available.</p>
+    {% endif %}
+</div>
+

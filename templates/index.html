@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ming Group Task Management</title>
+    {% load static %}
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #dee2e6;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        td {
+            background-color: #f8f9fa;
+        }
+
+        .no-logs {
+            text-align: center;
+            font-size: 18px;
+            color: #6c757d;
+        }
+        /* Reset default margins and paddings */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body Styling */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #ffffff;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Notification Styling */
+        #notification {
+            position: fixed;
+            top: 80px; /* Positioned below the header */
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 16px;
+            display: none;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            max-width: 90%;
+            word-wrap: break-word;
+            opacity: 0;
+            animation: slideDown 0.5s forwards;
+        }
+
+        /* Notification Slide-down Animation */
+        @keyframes slideDown {
+            from { opacity: 0; transform: translate(-50%, -20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        /* Success and Error Styles */
+        .error {
+            background-color: #f44336;
+        }
+        .success {
+            background-color: #4caf50;
+        }
+
+        /* Header Styling */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            z-index: 1000; /* Below notification */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 250px;
+            background-color: #343a40;
+            color: white;
+            position: fixed;
+            top: 60px; /* Below the header */
+            bottom: 0;
+            left: 0;
+            padding-top: 0; /* Removed padding for sidebar header */
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            transition: width 0.3s;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            background-color: #007bff;
+        }
+
+        .sidebar-tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #ddd;
+            transition: background-color 0.3s, color 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar-tab:hover {
+            background-color: #495057;
+            color: #fff;
+        }
+
+        .sidebar-tab.active {
+            background-color: #495057;
+            color: #fff;
+            border-left: 4px solid #007bff;
+        }
+
+        /* Main Content Styling */
+        .main-content {
+            margin-left: 250px; /* Width of the sidebar */
+            padding: 50px 20px 20px 20px; /* Top padding accounts for header */
+            width: calc(100% - 250px);
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+            background-image:
+                url('{% static "invoice/images/ming_group_logo.png" %}'),
+                url('{% static "invoice/images/ming_group_logo.png" %}');
+            background-position:
+                center left,
+                center right;
+            background-repeat: no-repeat;
+            background-size: 300px 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Sub Navigation Bar Styling */
+        .sub-navbar {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 10px 0;
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .subtabs {
+            display: flex;
+        }
+
+        .subtab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 15px;
+            color: #555;
+            transition: background-color 0.3s, color 0.3s;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+
+        .subtab:hover {
+            background-color: #e9ecef;
+        }
+
+        .subtab.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        /* Content Area Styling */
+        .content-area {
+            padding: 20px 0;
+            flex: 1;
+        }
+
+        /* Main Tab Content Styling */
+        .main-tab-content {
+            display: none;
+        }
+
+        .main-tab-content.active {
+            display: block;
+        }
+
+        /* Subtab Content Styling */
+        .subtab-content {
+            display: none;
+        }
+
+        .subtab-content.active {
+            display: block;
+        }
+
+        /* Form Container to Center the Form */
+        .form-container {
+            width: 100%;
+            max-width: 600px;
+            text-align: left;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+
+        /* Logs Container Styling */
+        .logs-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: rgba(245, 245, 245, 0.95);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+
+        /* Label Styling */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* Input and Select Styling */
+        select, input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        /* Focus Effects for Inputs and Selects */
+        select:focus, input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+            outline: none;
+        }
+
+        /* Button Styling */
+        button {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: 500;
+        }
+
+        /* Button Hover Effects */
+        button:hover {
+            background: linear-gradient(45deg, #0056b3, #004494);
+            transform: translateY(-2px);
+        }
+
+        /* Disabled Button Styling */
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loader Styling */
+        #loader, #zbon-loader, #cashbook-loader {
+            display: none;
+            margin: 10px auto;
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #007bff;
+            width: 35px;
+            height: 35px;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Loader Animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Loader Styling for Other Forms */
+        #zbon-loader, #cashbook-loader {
+            border-top: 4px solid #28a745; /* Different color for variety */
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 180px;
+            }
+            .main-content {
+                margin-left: 180px;
+                width: calc(100% - 180px);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .sidebar {
+                width: 160px;
+            }
+            .main-content {
+                margin-left: 160px;
+                width: calc(100% - 160px);
+            }
+
+            .subtab {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+
+            .form-container {
+                padding: 15px;
+            }
+
+            label {
+                font-size: 15px;
+            }
+
+            select, input {
+                padding: 12px;
+                font-size: 15px;
+            }
+
+            button {
+                padding: 12px;
+                font-size: 15px;
+            }
+
+            #loader, #zbon-loader, #cashbook-loader {
+                width: 30px;
+                height: 30px;
+                border-width: 3px;
+            }
+
+            #notification {
+                font-size: 14px;
+                padding: 12px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        Ming Group Management
+    </div>
+
+    <!-- Notification for displaying messages below the header -->
+    <div id="notification" role="alert" aria-live="assertive"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-tab active" onclick="openMainTab(event, 'invoice')">Invoice Management</div>
+        <div class="sidebar-tab" onclick="openMainTab(event, 'zbon')">Z-BON Management</div>
+        <div class="sidebar-tab" onclick="openMainTab(event, 'cashbook')">Cashbook Management</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Sub Navigation Bar with Sub-Tabs -->
+        <div class="sub-navbar">
+            <!-- Sub-Tabs for Invoice Management -->
+            <div id="invoice-subtabs" class="subtabs">
+                <div class="subtab active" onclick="openSubTab(event, 'fetch-pdfs')">Fetch PDFs</div>
+                <div class="subtab" onclick="openSubTab(event, 'view-logs')">View Logs</div>
+            </div>
+            <!-- Sub-Tabs for Z-BON Management -->
+            <div id="zbon-subtabs" class="subtabs" style="display: none;">
+                <div class="subtab active" onclick="openSubTab(event, 'fetch-zbon')">Fetch Z-BON</div>
+                <div class="subtab" onclick="openSubTab(event, 'zbon-logs')">View Logs</div>
+            </div>
+            <!-- Sub-Tabs for Cashbook Management -->
+            <div id="cashbook-subtabs" class="subtabs" style="display: none;">
+                <div class="subtab active" onclick="openSubTab(event, 'fetch-cashbook')">Fetch Cashbook</div>
+                <div class="subtab" onclick="openSubTab(event, 'cashbook-logs')">View Logs</div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Invoice Management Content -->
+            <div id="invoice" class="main-tab-content active">
+                <!-- Fetch PDFs Sub-Tab Content -->
+                <div id="fetch-pdfs" class="subtab-content active">
+                    <div class="form-container">
+                        <form id="pdf-fetch-form">
+                            <label for="company-dropdown">Select Company:</label>
+                            <select id="company-dropdown" name="company-dropdown" required>
+                                <option value="" disabled selected>Select a company</option>
+                                <option value="Ming Investment Consulting">MIC</option>
+                                <option value="KTV Bar">KTV</option>
+                                <option value="Han Factory">HF</option>
+                                <option value="Wolfstreet Management">WSM</option>
+                                <option value="Ming Dynastie GmbH">M2</option>
+                                <option value="Ming Dynastie Jannowitzbrücke">M1</option>
+                                <option value="Han BBQ">H1</option>
+                                <option value="BB Ming I GmbH">AR</option>
+                                <option value="Coffee Hanjan">HJ</option>
+                            </select>
+
+                            <label for="from-date">From Date:</label>
+                            <input type="date" id="from-date" name="from-date" required>
+
+                            <label for="to-date">To Date:</label>
+                            <input type="date" id="to-date" name="to-date" required>
+
+                            <button type="button" id="fetch-btn" onclick="fetchPdfs()">Fetch PDFs From Gmail</button>
+                            <!-- Loader -->
+                            <div id="loader"></div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- View Logs Sub-Tab Content -->
+                <div id="view-logs" class="subtab-content">
+                    <div id="view-logs-content">
+                        <!-- The logs will be dynamically loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Z-BON Management Content -->
+            <div id="zbon" class="main-tab-content">
+                <!-- Z-BON Fetch Sub-Tab Content -->
+                <div id="fetch-zbon" class="subtab-content active">
+                    <div class="form-container">
+                        <form id="zbon-fetch-form">
+                            <label for="zbon-input">Z-BON Input:</label>
+                            <input type="text" id="zbon-input" name="zbon-input" placeholder="Enter Z-BON details" required>
+
+                            <button type="button" id="zbon-fetch-btn" onclick="fetchZBon()">Fetch Z-BON</button>
+                            <!-- Loader -->
+                            <div id="zbon-loader"></div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Z-BON View Logs Sub-Tab Content -->
+                <div id="zbon-logs" class="subtab-content">
+                    <div class="logs-container">
+                        <!-- Z-BON logs content will go here -->
+                        <p>No logs available.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cashbook Management Content -->
+            <div id="cashbook" class="main-tab-content">
+                <!-- Cashbook Fetch Sub-Tab Content -->
+                <div id="fetch-cashbook" class="subtab-content active">
+                    <div class="form-container">
+                        <form id="cashbook-fetch-form">
+                            <label for="cashbook-input">Cashbook Input:</label>
+                            <input type="text" id="cashbook-input" name="cashbook-input" placeholder="Enter Cashbook details" required>
+
+                            <button type="button" id="cashbook-fetch-btn" onclick="fetchCashbook()">Fetch Cashbook</button>
+                            <!-- Loader -->
+                            <div id="cashbook-loader"></div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Cashbook View Logs Sub-Tab Content -->
+                <div id="cashbook-logs" class="subtab-content">
+                    <div class="logs-container">
+                        <!-- Cashbook logs content will go here -->
+                        <p>No logs available.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function searchLogs() {
+            // Declare variables
+            var input, filter, table, tr, td, i, j, txtValue;
+            input = document.getElementById("logSearch");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("logsTable");
+            tr = table.getElementsByTagName("tr");
+
+            // Loop through all table rows, and hide those that don't match the search query
+            for (i = 1; i < tr.length; i++) {
+                tr[i].style.display = "none"; // Initially hide all rows
+                td = tr[i].getElementsByTagName("td");
+                for (j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        txtValue = td[j].textContent || td[j].innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            tr[i].style.display = ""; // Show the row if a match is found
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        function fetchLogs() {
+            fetch('/fetch_logs/')
+                .then(response => response.json())
+                .then(data => {
+                    const logContainer = document.getElementById('view-logs-content');
+                    logContainer.innerHTML = '';  // Clear the current content
+                    logContainer.innerHTML = data.log_entries;
+                })
+                .catch(error => {
+                    console.error('Error fetching logs:', error);
+                });
+        }
+        function openMainTab(evt, mainTabName) {
+            var i, mainTabContent, sidebarTabs;
+
+            // Hide all main tab contents
+            mainTabContent = document.getElementsByClassName("main-tab-content");
+            for (i = 0; i < mainTabContent.length; i++) {
+                mainTabContent[i].classList.remove("active");
+            }
+
+            // Remove active class from all sidebar tabs
+            sidebarTabs = document.getElementsByClassName("sidebar-tab");
+            for (i = 0; i < sidebarTabs.length; i++) {
+                sidebarTabs[i].classList.remove("active");
+            }
+
+            // Show the selected main tab content and add active class to the sidebar tab
+            document.getElementById(mainTabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+
+            // Show the corresponding sub-navbar and hide others
+            var subtabs = document.getElementsByClassName("subtabs");
+            for (i = 0; i < subtabs.length; i++) {
+                subtabs[i].style.display = "none";
+            }
+            document.getElementById(mainTabName + "-subtabs").style.display = "flex";
+
+            // Automatically open the first sub-tab
+            var firstSubtab = document.querySelector("#" + mainTabName + "-subtabs .subtab");
+            if (firstSubtab) {
+                firstSubtab.click();
+            }
+        }
+
+        function openSubTab(evt, subTabName) {
+            var subTabContent, subTabs;
+            subTabContent = document.getElementsByClassName("subtab-content");
+            for (var i = 0; i < subTabContent.length; i++) {
+                subTabContent[i].classList.remove("active");
+            }
+            subTabs = document.getElementsByClassName("subtab");
+            for (var i = 0; i < subTabs.length; i++) {
+                subTabs[i].classList.remove("active");
+            }
+            if (subTabName === 'view-logs') {
+                fetchLogs();  // Fetch logs when the View Logs tab is clicked
+            }
+            document.getElementById(subTabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        function fetchPdfs() {
+            // Clear any existing notifications
+            const notification = document.getElementById("notification");
+            notification.classList.remove('error', 'success');
+            notification.style.display = "none";
+            notification.innerText = "";
+
+            // Get form elements
+            const companyDropdown = document.getElementById("company-dropdown");
+            const fromDate = document.getElementById("from-date").value;
+            const toDate = document.getElementById("to-date").value;
+            const fetchButton = document.getElementById("fetch-btn");
+            const loader = document.getElementById("loader");
+
+            // Form validation
+            if (!companyDropdown.value) {
+                showNotification("Please select a company.", "error");
+                return;
+            }
+
+            if (!fromDate || !toDate) {
+                showNotification("Both 'From Date' and 'To Date' are required.", "error");
+                return;
+            }
+
+            if (new Date(fromDate) > new Date(toDate)) {
+                showNotification("'From Date' cannot be later than 'To Date'.", "error");
+                return;
+            }
+
+            const keyword = companyDropdown.value;
+            const folder = companyDropdown.options[companyDropdown.selectedIndex].text;
+
+            // Disable the button and show the loader
+            fetchButton.disabled = true;
+            loader.style.display = "block";
+
+            // Make a POST request to the server
+            fetch('{% url "fetch_pdfs" %}', {  // Use Django's url template tag for URL resolution
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')  // Fetch CSRF token from cookies
+                },
+                body: JSON.stringify({
+                    keyword: keyword,
+                    folder: folder,
+                    from_date: fromDate,
+                    to_date: toDate
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Enable the button and hide the loader
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                if (data.status === 'success') {
+                    // Show the success message in the notification div
+                    showNotification(data.message, "success");
+
+                    // Clear the form fields on success
+                    document.getElementById("pdf-fetch-form").reset();
+                } else {
+                    // Show the error message in the notification div
+                    showNotification(data.message || 'An error occurred while fetching the PDFs.', "error");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+
+                // Re-enable the button and hide the loader in case of error
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                // Display error message in notification div
+                showNotification('An error occurred while fetching the PDFs.', "error");
+            });
+        }
+
+        function fetchZBon() {
+            // Clear any existing notifications
+            const notification = document.getElementById("notification");
+            notification.classList.remove('error', 'success');
+            notification.style.display = "none";
+            notification.innerText = "";
+
+            // Get form elements
+            const zbonInput = document.getElementById("zbon-input").value;
+            const fetchButton = document.getElementById("zbon-fetch-btn");
+            const loader = document.getElementById("zbon-loader");
+
+            // Form validation
+            if (!zbonInput.trim()) {
+                showNotification("Please enter Z-BON details.", "error");
+                return;
+            }
+
+            // Disable the button and show the loader
+            fetchButton.disabled = true;
+            loader.style.display = "block";
+
+            // Make a POST request to the server
+            fetch('{% url "fetch_pdfs" %}', {  // Replace with your actual URL
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')  // Fetch CSRF token from cookies
+                },
+                body: JSON.stringify({
+                    zbon_input: zbonInput
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Enable the button and hide the loader
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                if (data.status === 'success') {
+                    // Show the success message in the notification div
+                    showNotification(data.message, "success");
+
+                    // Clear the form fields on success
+                    document.getElementById("zbon-fetch-form").reset();
+                } else {
+                    // Show the error message in the notification div
+                    showNotification(data.message || 'An error occurred while fetching the Z-BON.', "error");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+
+                // Re-enable the button and hide the loader in case of error
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                // Display error message in notification div
+                showNotification('An error occurred while fetching the Z-BON.', "error");
+            });
+        }
+
+        function fetchCashbook() {
+            // Clear any existing notifications
+            const notification = document.getElementById("notification");
+            notification.classList.remove('error', 'success');
+            notification.style.display = "none";
+            notification.innerText = "";
+
+            // Get form elements
+            const cashbookInput = document.getElementById("cashbook-input").value;
+            const fetchButton = document.getElementById("cashbook-fetch-btn");
+            const loader = document.getElementById("cashbook-loader");
+
+            // Form validation
+            if (!cashbookInput.trim()) {
+                showNotification("Please enter Cashbook details.", "error");
+                return;
+            }
+
+            // Disable the button and show the loader
+            fetchButton.disabled = true;
+            loader.style.display = "block";
+
+            // Make a POST request to the server
+            fetch('{% url "fetch_pdfs" %}', {  // Replace with your actual URL
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')  // Fetch CSRF token from cookies
+                },
+                body: JSON.stringify({
+                    cashbook_input: cashbookInput
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Enable the button and hide the loader
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                if (data.status === 'success') {
+                    // Show the success message in the notification div
+                    showNotification(data.message, "success");
+
+                    // Clear the form fields on success
+                    document.getElementById("cashbook-fetch-form").reset();
+                } else {
+                    // Show the error message in the notification div
+                    showNotification(data.message || 'An error occurred while fetching the Cashbook.', "error");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+
+                // Re-enable the button and hide the loader in case of error
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                // Display error message in notification div
+                showNotification('An error occurred while fetching the Cashbook.', "error");
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById("notification");
+            notification.innerText = message;
+            notification.classList.remove('error', 'success');
+            notification.classList.add(type);
+            notification.style.display = "block";
+
+            // Auto-hide the notification after 5 seconds
+            setTimeout(() => {
+                notification.style.display = "none";
+            }, 5000);
+        }
+
+        // Function to get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Initialize the default main and sub-tabs on page load
+        document.addEventListener("DOMContentLoaded", function() {
+            // Open the default main tab
+            const defaultMainTab = document.querySelector(".sidebar-tab.active");
+            if (defaultMainTab) {
+                defaultMainTab.click();
+            }
+        });
+    </script>
+</body>
+</html>
