@@ -20,7 +20,7 @@ jobs:
 
     - name: Deploy to server
       run: |
-        ssh -o StrictHostKeyChecking=no apple@${{ secrets.SSH_HOST }} '
+        ssh apple@${{ secrets.SSH_HOST }} '
           cd Downloads/ming_group_projects/dashboardManagement &&
           git pull origin main
         '
