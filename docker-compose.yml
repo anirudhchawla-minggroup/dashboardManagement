@@ -23,21 +23,14 @@ services:
       timeout: 5s
 
   web:
-    build: .
-    container_name: dashboard_management_web
-    command: ["sh", "-c", "python manage.py migrate && gunicorn --bind 0.0.0.0:8000 dashboardManagement.wsgi:application"]
-    volumes:
-      - .:/app
-      - ./static:/app/staticfiles
-    depends_on:
-      - db
+    image: anirudhchawla889/ming_group_dashboard:latest  # Your Django app image
+    command: ./entrypoint.sh  # Run entrypoint script
     environment:
-      - DATABASE_URL=postgres://ming_group:1234@db:5432/dashboard_management
-      - DJANGO_SUPERUSER_USERNAME=ming_group_123
-      - DJANGO_SUPERUSER_PASSWORD=Qaywsxedcrfv@123
-      - DJANGO_SUPERUSER_EMAIL=ming_group@gmail.com
-    expose:
-      - "8000"  # Expose port to the Nginx container but not directly to the host
+      DATABASE_URL: postgres://user:password@db:5432/dashboard_management
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db  # Ensure db starts before Django
 
   nginx:
     image: nginx:latest
