@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:13
+    container_name: dashboard_management_db
+    environment:
+      POSTGRES_USER: ming_group
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: dashboard_management
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - /Users/anirudhchawla/Downloads/dashboardManagement/db_backups/db_dump.sql:/docker-entrypoint-initdb.d/init.sql  # Host to container file mapping
+      - /Users/anirudhchawla/Downloads/dashboardManagement/db_backups:/docker-entrypoint-initdb.d/db_backups  # Absolute path for db backups
+    ports:
+      - "5432:5432"
+    # Healthcheck to wait for DB to be ready
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ming_group", "-d", "dashboard_management"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+
+  web:
+    build: .
+    container_name: dashboard_management_web
+    command: ["sh", "-c", "python manage.py migrate && gunicorn --bind 0.0.0.0:8000 dashboardManagement.wsgi:application"]
+    volumes:
+      - .:/app
+      - ./static:/app/staticfiles
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://ming_group:1234@db:5432/dashboard_management
+      - DJANGO_SUPERUSER_USERNAME=ming_group_123
+      - DJANGO_SUPERUSER_PASSWORD=Qaywsxedcrfv@123
+      - DJANGO_SUPERUSER_EMAIL=ming_group@gmail.com
+    expose:
+      - "8000"  # Expose port to the Nginx container but not directly to the host
+
+  nginx:
+    image: nginx:latest
+    container_name: my_nginx
+    volumes:
+      - ./nginx/dashboardManagement_no_passphrase.key:/etc/nginx/cert/dashboardManagement.key
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx:/etc/nginx/cert
+      - ./static:/app/staticfiles
+    ports:
+      - "443:443"
+      - "80:80"  # Redirect HTTP to HTTPS
+    depends_on:
+      - web
+
+volumes:
+  pg_data:
