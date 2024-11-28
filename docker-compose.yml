@@ -1,17 +1,15 @@
-version: "3.8"
-
 services:
   db:
     image: postgres:13
-    container_name: dashboard_management_db
+    container_name: dashboard_management_db_testing
     environment:
       POSTGRES_USER: ming_group
       POSTGRES_PASSWORD: 1234
       POSTGRES_DB: dashboard_management
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - /Users/anirudhchawla/Downloads/dashboardManagement/db_backups/db_dump.sql:/docker-entrypoint-initdb.d/init.sql  # Host to container file mapping
-      - /Users/anirudhchawla/Downloads/dashboardManagement/db_backups:/docker-entrypoint-initdb.d/db_backups  # Absolute path for db backups
+      - /Users/db_backups/db_dump.sql:/docker-entrypoint-initdb.d/init.sql  # Host to container file mapping
+      - /Users/db_backups:/docker-entrypoint-initdb.d/db_backups  # Absolute path for db backups
     ports:
       - "5432:5432"
     # Healthcheck to wait for DB to be ready
@@ -24,22 +22,23 @@ services:
 
   web:
     image: anirudhchawla889/ming_group_dashboard:latest  # Your Django app image
-    command: ./entrypoint.sh  # Run entrypoint script
     environment:
       DATABASE_URL: postgres://user:password@db:5432/dashboard_management
     ports:
       - "8000:8000"
+    volumes:
+      - /app/staticfiles  # Mounting the static directory
     depends_on:
       - db  # Ensure db starts before Django
 
   nginx:
     image: nginx:latest
-    container_name: my_nginx
+    container_name: my_nginx_testing
     volumes:
       - ./nginx/dashboardManagement_no_passphrase.key:/etc/nginx/cert/dashboardManagement.key
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./nginx:/etc/nginx/cert
-      - ./static:/app/staticfiles
+      - ./staticfiles:/app/staticfiles:rw
     ports:
       - "443:443"
       - "80:80"  # Redirect HTTP to HTTPS
@@ -48,3 +47,5 @@ services:
 
 volumes:
   pg_data:
+
+
