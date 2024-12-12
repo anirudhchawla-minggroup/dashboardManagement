@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs Table - Ming Group Task Management</title>
+    {% load static %}
+    <style>
+        .card {
+            border: 1px solid black;
+            background-color: white;
+            padding: 20px;
+            margin-top: 5px;
+            border-radius: 5px;
+        }
+        .scrollable-list {
+            max-height: 150px; /* Adjust height as needed */
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        .scrollable-list ul {
+            list-style-type: none;  /* Remove bullet points */
+            padding-left: 0;
+            margin: 0;
+        }
+        .scrollable-list li {
+            padding: 5px 0;
+        }
+        #clear-date {
+            font-size: 16px;           /* Adjust the size of the icon */
+            color: #555;               /* Set the icon color */
+            padding-bottom: 25px;       /* Add bottom padding */
+            margin-left: 10px;         /* Add some space between the date input and the icon */
+            cursor: pointer;           /* Change cursor to pointer on hover */
+            display: inline-flex;      /* Align the cross properly */
+            align-items: center;       /* Vertically center it */
+            justify-content: center;   /* Center the icon */
+            width: 20px;               /* Set width */
+            height: 20px;              /* Set height */
+        }
+
+        #clear-date:hover {
+            color: #e74c3c;            /* Change color on hover to red (or any other color) */
+        }
+        .filter-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-container label {
+            font-weight: bold;
+            max-width: 30%;
+        }
+
+        .filter-company .filter-container input {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-width: 50px;
+        }
+        /* Tooltip Styling */
+        .pdfs-cell, .hover-text {
+            position: relative;
+            cursor: pointer;
+        }
+
+        /* Hide tooltip content by default */
+        .tooltip-content {
+            display: none;
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            top: 0;
+            left: 10%;
+            z-index: 10;
+            width: max-content;
+            max-width: 400px;
+            word-wrap: break-word;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-left: 10px;
+        }
+
+        /* Show tooltip content on hover */
+        .pdfs-cell:hover .tooltip-content {
+            display: block;
+        }
+
+        .hover-text:hover + .tooltip-content {
+            display: block;
+        }
+        /* Display list items with bullets */
+        .tooltip-content ul {
+            list-style-type: disc;
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        /* Add space between list items */
+        .tooltip-content li {
+            padding: 2px 0;
+        }
+
+        /* No Logs Message Styling */
+        .no-logs {
+            text-align: center;
+            font-size: 18px;
+            color: #6c757d;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="filter-container">
+            <label for="filter-date">Date:</label>
+            <input type="date" id="filter-date" name="filter-date" value="{{ selected_date|default_if_none:'' }}">
+            <!-- Conditionally show the clear icon if a date is selected -->
+            {% if selected_date %}
+                <span id="clear-date" style="cursor: pointer;">&#10005;</span>
+            {% else %}
+                <span id="clear-date" style="display: none; cursor: pointer;">&#10005;</span>
+            {% endif %}
+        </div>
+        <!-- Card that will display based on the selected date -->
+        {% if selected_date and log_entries %}
+        <div class="card">
+            <ul>
+                <!-- First point -->
+                <li>
+                    {% if unmatched_pdfs|length == 0 %}
+                        <p style="color: green;">No pdf was found for these companies: {{ company_list|join:", " }}</p>
+                    {% elif company_list and company_list|length > 0 %}
+                        <p style="color: red;">Pdf fetch process is not done for {{ company_list|join:", " }}.</p>
+                    {% else %}
+                        <p style="color: green;">Pdf fetch process done for all companies for this date.</p>
+                    {% endif %}
+                </li>
+                <!-- Second point for NoCompanyPdfFilesLog -->
+                <li>
+                    {% if unmatched_pdfs and unmatched_pdfs|length > 0 %}
+                    <strong style="color: red;">Pdf files not matched with {{ unmatched_pdfs|length }} companies:</strong>
+                    <div class="scrollable-list">
+                        <ul>
+                            {% for pdf in unmatched_pdfs %}
+                                <li>{{ pdf.pdf_filename }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% else %}
+                    <p style="color: green;">All PDFs matched successfully with companies.</p>
+                    {% endif %}
+                </li>
+            </ul>
+        </div>
+        {% endif %}
+        {% if log_entries %}
+        <table id="logsTable">
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Email Date</th>  <!-- New column for email date -->
+                    <th>Total Pdfs</th>
+                    <th id="pdfs-header">Pdfs Of This Company <span id="pdfs-total">0</span></th>
+                    <th>User</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in log_entries %}
+                <tr class="log-row" data-from="{{ entry.from_date }}" data-to="{{ entry.to_date }}">
+                    <td>{{ entry.folder }}</td>
+                    <td>{{ entry.email_date }}</td>
+                    <td>{{ entry.total_pdfs }}</td>
+                    <!-- Tooltip logic for PDF list -->
+                    <td class="pdfs-cell">
+                        {{ entry.pdfs_of_this_company }}
+                        {% if entry.pdfs_of_this_company > 0 %}
+                        <div class="tooltip-content">
+                            <ul>
+                                {% for pdf in entry.pdf_list %}
+                                    <li>{{ pdf }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>{{ entry.user_name }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="no-logs">No logs available.</p>
+        {% endif %}
+    </div>
+
+</body>
+</html>

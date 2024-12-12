@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ming Group Task Management</title>
+    {% load static %}
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'invoice/css/MultiSelect.css' %}">
+    <style>
+        #company-dropdown {
+            padding-bottom: 20px; /* Adjust the padding as per your requirement */
+            border-radius: 8px; /* Optional: to make the border corners slightly rounded */
+            width: 100%; /* Optional: to make the dropdown full width */
+            height: auto; /* Adjust the height as necessary */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #dee2e6;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        td {
+            background-color: #f8f9fa;
+        }
+
+        .no-logs {
+            text-align: center;
+            font-size: 18px;
+            color: #6c757d;
+        }
+        /* Reset default margins and paddings */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body Styling */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #ffffff;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Notification Styling */
+        #notification {
+            position: fixed;
+            top: 80px; /* Positioned below the header */
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 16px;
+            display: none;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            max-width: 90%;
+            word-wrap: break-word;
+            opacity: 0;
+            animation: slideDown 0.5s forwards;
+        }
+
+        /* Notification Slide-down Animation */
+        @keyframes slideDown {
+            from { opacity: 0; transform: translate(-50%, -20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        /* Success and Error Styles */
+        .error {
+            background-color: #f44336;
+        }
+        .success {
+            background-color: #4caf50;
+        }
+
+        /* Header Styling */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            z-index: 1000; /* Below notification */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        /* Logout button container for right-side positioning */
+        .logout-container {
+            position: absolute;       /* Use absolute positioning */
+            right: 20px;              /* Align the logout button to the right */
+            top: 45%;                 /* Vertically align it */
+            transform: translateY(-50%); /* Center vertically */
+        }
+        /* Logout link styling */
+        .logout-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            padding: 10px 20px;
+            background-color: #ff4d4d;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .logout-link:hover {
+            background-color: #ff1a1a;
+        }
+        /* Sidebar Styling */
+        .sidebar {
+            width: 250px;
+            background-color: #343a40;
+            color: white;
+            position: fixed;
+            top: 60px; /* Below the header */
+            bottom: 0;
+            left: 0;
+            padding-top: 0; /* Removed padding for sidebar header */
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            transition: width 0.3s;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            background-color: #007bff;
+        }
+
+        .sidebar-tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #ddd;
+            transition: background-color 0.3s, color 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar-tab:hover {
+            background-color: #495057;
+            color: #fff;
+        }
+
+        .sidebar-tab.active {
+            background-color: #495057;
+            color: #fff;
+            border-left: 4px solid #007bff;
+        }
+
+        /* Main Content Styling */
+        .main-content {
+            margin-left: 250px; /* Width of the sidebar */
+            padding: 50px 20px 20px 20px; /* Top padding accounts for header */
+            width: calc(100% - 250px);
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+            background-image:
+                url('{% static "invoice/images/ming_group_logo.png" %}'),
+                url('{% static "invoice/images/ming_group_logo.png" %}');
+            background-position:
+                center left,
+                center right;
+            background-repeat: no-repeat;
+            background-size: 300px 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Sub Navigation Bar Styling */
+        .sub-navbar {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 10px 0;
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .subtabs {
+            display: flex;
+        }
+
+        .subtab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 15px;
+            color: #555;
+            transition: background-color 0.3s, color 0.3s;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+
+        .subtab:hover {
+            background-color: #e9ecef;
+        }
+
+        .subtab.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        /* Content Area Styling */
+        .content-area {
+            padding: 20px 0;
+            flex: 1;
+        }
+
+        /* Main Tab Content Styling */
+        .main-tab-content {
+            display: none;
+        }
+
+        .main-tab-content.active {
+            display: block;
+        }
+
+        /* Subtab Content Styling */
+        .subtab-content {
+            display: none;
+        }
+
+        .subtab-content.active {
+            display: block;
+        }
+
+        /* Form Container to Center the Form */
+        .form-container {
+            width: 100%;
+            max-width: 600px;
+            text-align: left;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+
+        /* Logs Container Styling */
+        .logs-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: rgba(245, 245, 245, 0.95);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+
+        /* Label Styling */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* Input and Select Styling */
+        select, input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        /* Focus Effects for Inputs and Selects */
+        select:focus, input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+            outline: none;
+        }
+
+        /* Button Styling */
+        button {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: 500;
+        }
+
+        /* Button Hover Effects */
+        button:hover {
+            background: linear-gradient(45deg, #0056b3, #004494);
+            transform: translateY(-2px);
+        }
+
+        /* Disabled Button Styling */
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loader Styling */
+        #loader, #zbon-loader, #cashbook-loader {
+            display: none;
+            margin: 10px auto;
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #007bff;
+            width: 35px;
+            height: 35px;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Loader Animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Loader Styling for Other Forms */
+        #zbon-loader, #cashbook-loader {
+            border-top: 4px solid #28a745; /* Different color for variety */
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 180px;
+            }
+            .main-content {
+                margin-left: 180px;
+                width: calc(100% - 180px);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .sidebar {
+                width: 160px;
+            }
+            .main-content {
+                margin-left: 160px;
+                width: calc(100% - 160px);
+            }
+
+            .subtab {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+
+            .form-container {
+                padding: 15px;
+            }
+
+            label {
+                font-size: 15px;
+            }
+
+            select, input {
+                padding: 12px;
+                font-size: 15px;
+            }
+
+            button {
+                padding: 12px;
+                font-size: 15px;
+            }
+
+            #loader, #zbon-loader, #cashbook-loader {
+                width: 30px;
+                height: 30px;
+                border-width: 3px;
+            }
+
+            #notification {
+                font-size: 14px;
+                padding: 12px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            Ming Group Management
+        </div>
+        
+        <!-- Logout button visible only for authenticated users -->
+        <div class="logout-container">
+            <a href="{% url 'logout' %}" class="logout-link">Logout</a>
+        </div>
+    </div>
+
+    <!-- Notification for displaying messages below the header -->
+    <div id="notification" role="alert" aria-live="assertive"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-tab active" onclick="openMainTab(event, 'invoice')">Invoice Management</div>
+        <div class="sidebar-tab" onclick="openMainTab(event, 'zbon')">Z-BON Management</div>
+        <div class="sidebar-tab" onclick="openMainTab(event, 'cashbook')">Cashbook Management</div>
+        <div class="sidebar-tab" onclick="openMainTab(event, 'generate_sepa_xml_file')">
+            Generate SEPA.xml
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Sub Navigation Bar with Sub-Tabs -->
+        <div class="sub-navbar">
+            <!-- Sub-Tabs for Invoice Management -->
+            <div id="invoice-subtabs" class="subtabs">
+                <div class="subtab active" onclick="openSubTab(event, 'fetch-pdfs')">Fetch PDFs</div>
+                <div class="subtab" onclick="openSubTab(event, 'view-logs')">View Logs</div>
+            </div>
+            <!-- Sub-Tabs for Z-BON Management -->
+            <div id="zbon-subtabs" class="subtabs" style="display: none;">
+                <div class="subtab active" onclick="openSubTab(event, 'fetch-zbon')">Fetch Z-BON</div>
+                <div class="subtab" onclick="openSubTab(event, 'zbon-logs')">View Logs</div>
+            </div>
+            <!-- Sub-Tabs for Cashbook Management -->
+            <div id="cashbook-subtabs" class="subtabs" style="display: none;">
+                <div class="subtab active" onclick="openSubTab(event, 'fetch-cashbook')">Fetch Cashbook</div>
+                <div class="subtab" onclick="openSubTab(event, 'cashbook-logs')">View Logs</div>
+            </div>
+            <!-- Sub-Tabs for Cashbook Management -->
+            <div id="generate_sepa_xml_file-subtabs" class="subtabs" style="display: none;">
+                <div class="subtab active" onclick="openSubTab(event, 'fetch-generate_sepa_xml_file')">Upload New Pdfs</div>
+                <div class="subtab" onclick="openSubTab(event, 'generate_sepa_xml_file-logs')">View Logs</div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <div id="content-display"></div>
+            <!-- Invoice Management Content -->
+            <div id="invoice" class="main-tab-content active">
+                <!-- Fetch PDFs Sub-Tab Content -->
+                <div id="fetch-pdfs" class="subtab-content active">
+                    <div class="form-container">
+                        <form id="pdf-fetch-form">
+                            <label for="company-dropdown">Select Companies:</label>
+                            <select id="company-dropdown" name="company-dropdown" multiple data-multi-select>
+                            </select>
+
+                            <label for="from-date">From Date:</label>
+                            <input type="date" id="from-date" name="from-date" required>
+
+                            <label for="to-date">To Date:</label>
+                            <input type="date" id="to-date" name="to-date" required>
+
+                            <button type="button" id="fetch-btn" onclick="fetchPdfs()">Fetch PDFs From Gmail</button>
+                            <!-- Loader -->
+                            <div id="loader"></div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- View Logs Sub-Tab Content -->
+                <div id="view-logs" class="subtab-content">
+                    <div id="view-logs-content">
+                        <!-- The logs will be dynamically loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Z-BON Management Content -->
+            <div id="zbon" class="main-tab-content">
+                <!-- Z-BON Fetch Sub-Tab Content -->
+                <div id="fetch-zbon" class="subtab-content active">
+                    <div class="form-container">
+                        <form id="zbon-fetch-form">
+                            <label for="zbon-input">Z-BON Input:</label>
+                            <input type="text" id="zbon-input" name="zbon-input" placeholder="Enter Z-BON details" required>
+
+                            <button type="button" id="zbon-fetch-btn" onclick="fetchZBon()">Fetch Z-BON</button>
+                            <!-- Loader -->
+                            <div id="zbon-loader"></div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Z-BON View Logs Sub-Tab Content -->
+                <div id="zbon-logs" class="subtab-content">
+                    <div class="logs-container">
+                        <!-- Z-BON logs content will go here -->
+                        <p>No logs available.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cashbook Management Content -->
+            <div id="cashbook" class="main-tab-content">
+                <!-- Cashbook Fetch Sub-Tab Content -->
+                <div id="fetch-cashbook" class="subtab-content active">
+                    <div class="form-container">
+                        <form id="cashbook-fetch-form">
+                            <label for="cashbook-input">Cashbook Input:</label>
+                            <input type="text" id="cashbook-input" name="cashbook-input" placeholder="Enter Cashbook details" required>
+
+                            <button type="button" id="cashbook-fetch-btn" onclick="fetchCashbook()">Fetch Cashbook</button>
+                            <!-- Loader -->
+                            <div id="cashbook-loader"></div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Cashbook View Logs Sub-Tab Content -->
+                <div id="cashbook-logs" class="subtab-content">
+                    <div class="logs-container">
+                        <!-- Cashbook logs content will go here -->
+                        <p>No logs available.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generate SEPA XML Content -->
+            <div id="generate_sepa_xml_file" class="main-tab-content">
+                <!-- Content for Generate SEPA.xml goes here -->
+                <div id="fetch-generate_sepa_xml_file" class="subtab-content active">
+
+                </div>
+                <div id="generate_sepa_xml_file-logs" class="subtab-content">
+                    <div class="logs-container">
+                        <!-- generate_sepa_xml_file logs content will go here -->
+                        <p>No logs available.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'invoice/js/MultiSelect.js' %}"></script>
+    <script>
+        let selectedOptionsList = [];
+
+        function generateSepaXML() {
+            console.log("ssvd");
+            // Clear any existing notifications
+            const notification = document.getElementById("notification");
+            notification.classList.remove('error', 'success');
+            notification.style.display = "none";
+            notification.innerText = "";
+
+            const fetchButton = document.getElementById("generate-sepa-btn");
+            const loader = document.getElementById("loader");
+            // Collect form values
+            const transactionForms = document.querySelectorAll('.transaction-form');
+            const transactions = Array.from(transactionForms).map((form, index) => ({
+                Nm: form.querySelector(`input[name="recipient_name_${index}"]`).value,
+                IBAN: form.querySelector(`input[name="iban_${index}"]`).value,
+                InstdAmt: form.querySelector(`input[name="amount_${index}"]`).value,
+                Purp: form.querySelector(`input[name="intended_use_${index}"]`).value
+            }));
+
+            const incompleteTransaction = transactions.find(transaction => !transaction.Nm || !transaction.IBAN || !transaction.InstdAmt);
+            if (incompleteTransaction) {
+                showNotification("Please fill out all required fields (Recipient, IBAN, Amount) in each transaction.", "error");
+                return;
+            }
+
+            const invalidIndex = transactions.findIndex(transaction => 
+                !/^[\d.,]+$/.test(transaction.InstdAmt)
+            );
+            if (invalidIndex !== -1) {
+                showNotification(`Transaction ${invalidIndex + 1}: Amount field should only contain numbers, commas, or periods.`, "error");
+                return;
+            }
+
+            const companyInput = document.getElementById("company_name");
+            if (!companyInput.value) {
+                showNotification("Please select a company from the dropdown.", "error");
+                return;
+            }
+            // Disable the button and show the loader
+            fetchButton.disabled = true;
+            loader.style.display = "block";
+            console.log("transactions");
+            console.log(transactions);
+            // Make a POST request to the server
+            fetch('{% url "generate_sepa_xml" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')  // Fetch CSRF token from cookies
+                },
+                body: JSON.stringify({
+                    transactions: transactions,
+                    paying_company: companyInput.value
+                })
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                // Enable the button and hide the loader
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                // Check if the response is a successful download
+                if (blob.size > 0) {
+                    const now = new Date();
+                    const datetimeString = now.toISOString().replace(/[-T:.]/g, "").slice(0, 15); // Format: YYYYMMDD_HHMMSS
+        
+                    // Create a link element to trigger the download
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `sepa_${datetimeString}.xml`;  // Set the desired filename for download
+                    link.click();  // Trigger the download automatically
+
+                    showNotification('SEPA XML file has been generated and downloaded.', "success");
+                } else {
+                    showNotification('An error occurred while generating the SEPA XML file.', "error");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+
+                // Re-enable the button and hide the loader in case of error
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                showNotification('An error occurred while generating the SEPA XML file.', "error");
+            });
+        }
+
+        function createTransactionForms(numForms,suppliers) {
+            transactionFormsContainer.innerHTML = ''; // Clear existing forms
+            for (let i = 0; i < numForms; i++) {
+                const formDiv = document.createElement('div');
+                formDiv.classList.add('transaction-form');
+
+                formDiv.innerHTML = `
+                    <h3 style="padding-bottom:8px">
+                        Transaction Details for PDF ${i + 1}
+                        <sepa_button class="open-pdf-btn" onclick="openPdf(${i})">Open PDF</sepa_button>
+                    </h3>
+                    
+                    <!-- Recipient Dropdown -->
+                    <label for="recipient_name_${i}">Recipient Name</label>
+                    <div class="dropdown-container">
+                        <input type="text" id="recipient_name_${i}" name="recipient_name_${i}" class="dropdown-input" placeholder="Select recipient..." autocomplete="off" required>
+                        <div class="dropdown-list" id="dropdown_list_${i}"></div>
+                    </div>
+
+                    <label for="iban_${i}">IBAN</label>
+                    <input type="text" id="iban_${i}" name="iban_${i}" required>
+
+                    <label for="amount_${i}">Amount</label>
+                    <input type="text" id="amount_${i}" name="amount_${i}" required>
+
+                    <label for="intended_use_${i}">Intended Use</label>
+                    <input type="text" id="intended_use_${i}" name="intended_use_${i}">
+                `;
+                
+                transactionFormsContainer.appendChild(formDiv);
+
+                // Initialize the dropdown for this form
+                initializeDropdown(i,suppliers);
+            }
+        }
+
+
+        function initializeCompanyDropdown(companies) {
+            const companyInput = document.getElementById("company_name");
+            const companyDropdownList = document.getElementById("company_dropdown_list");
+
+            // Populate dropdown with company short forms
+            companies.forEach(company => {
+                const item = document.createElement("div");
+                item.classList.add("dropdown-item");
+                item.innerHTML = `<div class="recipient">${company.company_short_form}</div>`;
+                
+                item.addEventListener("click", () => {
+                    companyInput.value = company.company_short_form;
+                    companyDropdownList.style.display = "none";
+                });
+                
+                companyDropdownList.appendChild(item);
+            });
+
+            // Show dropdown when the user clicks or types in the input
+            companyInput.addEventListener("click", (e) => {
+                e.stopPropagation();
+                toggleDropdown(companyDropdownList);
+            });
+
+            // Filter companies on input
+            companyInput.addEventListener("input", function () {
+                const filter = companyInput.value.toLowerCase();
+                const items = companyDropdownList.getElementsByClassName("dropdown-item");
+                let visibleCount = 0;
+
+                Array.from(items).forEach(item => {
+                    const name = item.getElementsByClassName("recipient")[0].innerText.toLowerCase();
+                    if (name.includes(filter)) {
+                        item.style.display = "block";
+                        visibleCount++;
+                    } else {
+                        item.style.display = "none";
+                    }
+                });
+
+                companyDropdownList.style.display = visibleCount > 0 ? "block" : "none";
+            });
+
+            // Hide dropdown if clicked outside
+            document.addEventListener("click", function(event) {
+                if (!companyDropdownList.contains(event.target) && event.target !== companyInput) {
+                    companyDropdownList.style.display = "none";
+                }
+            });
+        }
+
+        function initializeDropdown(index,suppliers) {
+            const input = document.getElementById(`recipient_name_${index}`);
+            const dropdown = document.getElementById(`dropdown_list_${index}`);
+            // Populate dropdown with suppliers
+            suppliers.forEach(supplier => {
+                const item = document.createElement('div');
+                item.classList.add('dropdown-item');
+                item.innerHTML = `
+                    <div class="recipient">${supplier.recipient}</div>
+                    <div class="iban">${supplier.iban}</div>
+                `;
+                item.addEventListener('click', () => {
+                    input.value = supplier.recipient;
+                    document.getElementById(`iban_${index}`).value = supplier.iban;
+                    dropdown.style.display = 'none';
+                });
+                dropdown.appendChild(item);
+            });
+
+            // Toggle dropdown visibility on click
+            input.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent event from bubbling up
+                toggleDropdown(dropdown);
+            });
+
+            // Search functionality
+            input.addEventListener('input', function() {
+                const filter = input.value.toLowerCase();
+                const items = dropdown.getElementsByClassName('dropdown-item');
+                let visibleCount = 0;
+
+                Array.from(items).forEach(item => {
+                    const recipient = item.getElementsByClassName('recipient')[0].innerText.toLowerCase();
+                    const iban = item.getElementsByClassName('iban')[0].innerText.toLowerCase();
+                    if (recipient.includes(filter) || iban.includes(filter)) {
+                        item.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+
+                if (visibleCount > 0) {
+                    dropdown.style.display = 'block';
+                } else {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!dropdown.contains(event.target) && event.target !== input) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleDropdown(dropdown) {
+            console.log(dropdown.style.display);
+            if (dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+            } else {
+                dropdown.style.display = 'block';
+            }
+        }
+
+        // Function to open the PDF in a new tab
+        function openPdf(index) {
+            const file = fileInput.files[index];
+            if (file && file.type === 'application/pdf') {
+                const blobURL = URL.createObjectURL(file);
+                window.open(blobURL, '_blank');
+                // Optional: Revoke the object URL after a certain time to free up memory
+                setTimeout(() => URL.revokeObjectURL(blobURL), 10000); // Revoke after 10 seconds
+            } else {
+                alert('The selected file is not a valid PDF.');
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Open the default main tab
+            loadCompanyData();
+            const defaultMainTab = document.querySelector(".sidebar-tab.active");
+            if (defaultMainTab) {
+                defaultMainTab.click();
+            }
+            document.body.addEventListener("change", function(event) {
+                // Check if the event target is the date input (filter-date)
+                if (event.target && event.target.id === "filter-date") {
+                    const selectedDate = event.target.value;
+                    fetchLogs(selectedDate);
+                }
+            });
+            document.body.addEventListener("click", function(event) {
+                const dateInput = document.getElementById("filter-date");
+                // Check if the clicked element is the clear date icon
+                if (event.target && event.target.id === "clear-date") {
+                    // Clear the date input
+                    dateInput.value = '';
+
+                    // Hide the clear icon
+                    event.target.style.display = 'none';
+
+                    // Fetch logs without a date filter
+                    fetchLogs('');
+                }
+            });
+        });
+        const username = "{{ username|escapejs }}";  // Pass the username from the view to JS
+
+        function load_sepa_tab_content() {
+            let url = `/sepa_generator_for_invoice/upload_new_pdf_sepa_creation/`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const logContainer = document.getElementById('fetch-generate_sepa_xml_file');
+                    logContainer.innerHTML = '';  // Clear existing content
+                    logContainer.innerHTML = data.html_content;  // Insert new logs
+                    const dropzone = document.getElementById('dropzone');
+                    const fileInput = document.getElementById('fileInput');
+                    const transactionFormsContainer = document.getElementById('transactionFormsContainer');
+                    const companyDropdownContainer = document.getElementById('company-dropdown-container');
+                    const suppliers = JSON.parse(data.suppliers_json);
+                    const companies = JSON.parse(data.companies_json);
+                    dropzone.addEventListener('click', () => {
+                    fileInput.click();
+                    })
+                    const sepaButton = document.querySelector('button[name="generate_sepa_xml"]');
+
+                    // Initially disable the button
+                    sepaButton.disabled = true;
+
+                    // Function to enable/disable the button based on the presence of transaction forms
+                    function toggleSepaButton() {
+                        sepaButton.disabled = transactionFormsContainer.children.length === 0;
+                    }
+
+                    // Monitor the transactionFormsContainer for changes
+                    const observer = new MutationObserver(toggleSepaButton);
+                    observer.observe(transactionFormsContainer, { childList: true });
+                    dropzone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        dropzone.classList.add('dragover');
+                    });
+
+                    dropzone.addEventListener('dragleave', () => {
+                        dropzone.classList.remove('dragover');
+                    });
+
+                    dropzone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        dropzone.classList.remove('dragover');
+                        const files = e.dataTransfer.files;
+                        fileInput.files = files;
+                        createTransactionForms(files.length,suppliers);
+                    });
+
+                    fileInput.addEventListener('change', () => {
+                        const files = fileInput.files;
+                        createTransactionForms(files.length,suppliers);
+                        if (fileInput.files.length > 0) {
+                            companyDropdownContainer.style.display = 'block';
+                            initializeCompanyDropdown(companies);
+                        } else {
+                            companyDropdownContainer.style.display = 'none';
+                        }
+                    });
+                    // Supplier data passed from Django view
+
+                })
+                .catch(error => {
+                    console.error('Error fetching logs:', error);
+                });
+        }
+
+        function fetchLogs(selectedDate = null) {
+            const username = "{{ username|escapejs }}";
+            let url = `/invoice/fetch_logs/?username=${encodeURIComponent(username)}`;
+            if (selectedDate) {
+                url += `&date=${encodeURIComponent(selectedDate)}`;
+            }
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("username");
+                    console.log(username);
+                    const logContainer = document.getElementById('view-logs-content');
+                    logContainer.innerHTML = '';  // Clear existing content
+                    logContainer.innerHTML = data.log_entries;  // Insert new logs
+
+                    // Update the total PDFs count
+                    const pdfsTotalElement = document.getElementById("pdfs-total");
+                    if (pdfsTotalElement) {
+                        const totalPdfs = data.total_pdfs || 0;
+                        pdfsTotalElement.textContent = totalPdfs;
+
+                        // Hide the element if the total PDFs is 0, otherwise show it
+                        if (totalPdfs === 0) {
+                            pdfsTotalElement.style.display = 'none';  // Hide the element
+                        } else {
+                            pdfsTotalElement.style.display = 'inline';  // Show the element
+                        }
+                    }
+                })
+                .catch(error => {
+                    const logContainer = document.getElementById('view-logs-content');
+                    logContainer.innerHTML = '<p class="no-logs">An error occurred while fetching the logs.</p>';
+                });
+        }
+
+        // Function to load company data dynamically from the server
+        function loadCompanyData() {
+            fetch('/invoice/get-company-data/')  // Make sure this endpoint matches your Django view URL
+                .then(response => response.json())  // Convert the response to JSON
+                .then(data => {
+                    // Initialize the MultiSelect dropdown with data from the server
+                    new MultiSelect('#company-dropdown', {
+                        data: data.data,  // Use the dynamic data from the server
+                        placeholder: 'Select an option',
+                        search: true,
+                        selectAll: true,
+                        listAll: false,
+                        onChange: function(value, text, element) {
+                            console.log('Change:', value, text, element);
+                        },
+                        onSelect: function(value, text, element) {
+                            selectedOptionsList.push({ value, text });
+                            console.log('Selected:', selectedOptionsList);
+                        },
+                        onUnselect: function(value, text, element) {
+                            selectedOptionsList = selectedOptionsList.filter(option => option.value !== value);
+                            console.log('Unselected:', selectedOptionsList);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching company data:', error);
+                });
+        }
+
+        function openMainTab(evt, mainTabName) {
+            var i, mainTabContent, sidebarTabs;
+
+            // Hide all main tab contents
+            mainTabContent = document.getElementsByClassName("main-tab-content");
+            for (i = 0; i < mainTabContent.length; i++) {
+                mainTabContent[i].classList.remove("active");
+            }
+
+            // Remove active class from all sidebar tabs
+            sidebarTabs = document.getElementsByClassName("sidebar-tab");
+            for (i = 0; i < sidebarTabs.length; i++) {
+                sidebarTabs[i].classList.remove("active");
+            }
+
+            // Show the selected main tab content and add active class to the sidebar tab
+            document.getElementById(mainTabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+
+            // Show the corresponding sub-navbar and hide others
+            var subtabs = document.getElementsByClassName("subtabs");
+            for (i = 0; i < subtabs.length; i++) {
+                subtabs[i].style.display = "none";
+            }
+            document.getElementById(mainTabName + "-subtabs").style.display = "flex";
+
+            // Automatically open the first sub-tab
+            var firstSubtab = document.querySelector("#" + mainTabName + "-subtabs .subtab");
+            if (firstSubtab) {
+                firstSubtab.click();
+            }
+
+            // Load content if the tab requires it
+            if (mainTabName === 'generate_sepa_xml_file') {
+                load_sepa_tab_content();
+            }
+        }
+
+        function openSubTab(evt, subTabName) {
+            var subTabContent, subTabs;
+            subTabContent = document.getElementsByClassName("subtab-content");
+            for (var i = 0; i < subTabContent.length; i++) {
+                subTabContent[i].classList.remove("active");
+            }
+            subTabs = document.getElementsByClassName("subtab");
+            for (var i = 0; i < subTabs.length; i++) {
+                subTabs[i].classList.remove("active");
+            }
+            if (subTabName === 'view-logs') {
+                fetchLogs();  // Fetch logs when the View Logs tab is clicked
+            }
+            document.getElementById(subTabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        function fetchPdfs() {
+            console.log("selectedOptionsList");
+            console.log(selectedOptionsList);
+            // Clear any existing notifications
+            const notification = document.getElementById("notification");
+            notification.classList.remove('error', 'success');
+            notification.style.display = "none";
+            notification.innerText = "";
+
+            const fromDate = document.getElementById("from-date").value;
+            const toDate = document.getElementById("to-date").value;
+            const fetchButton = document.getElementById("fetch-btn");
+            const loader = document.getElementById("loader");
+
+            // Form validation
+            if (selectedOptionsList.length === 0) {
+                showNotification("Please select atleast 1 company.", "error");
+                return;
+            }
+
+            if (!fromDate || !toDate) {
+                showNotification("Both 'From Date' and 'To Date' are required.", "error");
+                return;
+            }
+
+            if (new Date(fromDate) > new Date(toDate)) {
+                showNotification("'From Date' cannot be later than 'To Date'.", "error");
+                return;
+            }
+
+            // Disable the button and show the loader
+            fetchButton.disabled = true;
+            loader.style.display = "block";
+
+            // Make a POST request to the server
+            fetch('{% url "fetch_pdfs" %}', {  // Use Django's url template tag for URL resolution
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')  // Fetch CSRF token from cookies
+                },
+                body: JSON.stringify({
+                    selectedOptionsList: selectedOptionsList,
+                    from_date: fromDate,
+                    to_date: toDate,
+                    user_name: username
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Enable the button and hide the loader
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                if (data.status === 'success') {
+                    // Show the success message in the notification div
+                    showNotification(data.message, "success");
+                    
+                    // Clear the form fields on success
+                    //document.getElementById("pdf-fetch-form").reset();
+                } else {
+                    // Show the error message in the notification div
+                    showNotification(data.message || 'An error occurred while fetching the PDFs.', "error");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+
+                // Re-enable the button and hide the loader in case of error
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                // Display error message in notification div
+                showNotification('An error occurred while fetching the PDFs.', "error");
+            });
+        }
+
+        function fetchZBon() {
+            // Clear any existing notifications
+            const notification = document.getElementById("notification");
+            notification.classList.remove('error', 'success');
+            notification.style.display = "none";
+            notification.innerText = "";
+
+            // Get form elements
+            const zbonInput = document.getElementById("zbon-input").value;
+            const fetchButton = document.getElementById("zbon-fetch-btn");
+            const loader = document.getElementById("zbon-loader");
+
+            // Form validation
+            if (!zbonInput.trim()) {
+                showNotification("Please enter Z-BON details.", "error");
+                return;
+            }
+
+            // Disable the button and show the loader
+            fetchButton.disabled = true;
+            loader.style.display = "block";
+
+            // Make a POST request to the server
+            fetch('{% url "fetch_pdfs" %}', {  // Replace with your actual URL
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')  // Fetch CSRF token from cookies
+                },
+                body: JSON.stringify({
+                    zbon_input: zbonInput
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Enable the button and hide the loader
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                if (data.status === 'success') {
+                    // Show the success message in the notification div
+                    showNotification(data.message, "success");
+
+                    // Clear the form fields on success
+                    document.getElementById("zbon-fetch-form").reset();
+                } else {
+                    // Show the error message in the notification div
+                    showNotification(data.message || 'An error occurred while fetching the Z-BON.', "error");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+
+                // Re-enable the button and hide the loader in case of error
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                // Display error message in notification div
+                showNotification('An error occurred while fetching the Z-BON.', "error");
+            });
+        }
+
+        function fetchCashbook() {
+            // Clear any existing notifications
+            const notification = document.getElementById("notification");
+            notification.classList.remove('error', 'success');
+            notification.style.display = "none";
+            notification.innerText = "";
+
+            // Get form elements
+            const cashbookInput = document.getElementById("cashbook-input").value;
+            const fetchButton = document.getElementById("cashbook-fetch-btn");
+            const loader = document.getElementById("cashbook-loader");
+
+            // Form validation
+            if (!cashbookInput.trim()) {
+                showNotification("Please enter Cashbook details.", "error");
+                return;
+            }
+
+            // Disable the button and show the loader
+            fetchButton.disabled = true;
+            loader.style.display = "block";
+
+            // Make a POST request to the server
+            fetch('{% url "fetch_pdfs" %}', {  // Replace with your actual URL
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')  // Fetch CSRF token from cookies
+                },
+                body: JSON.stringify({
+                    cashbook_input: cashbookInput
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Enable the button and hide the loader
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                if (data.status === 'success') {
+                    // Show the success message in the notification div
+                    showNotification(data.message, "success");
+
+                    // Clear the form fields on success
+                    document.getElementById("cashbook-fetch-form").reset();
+                } else {
+                    // Show the error message in the notification div
+                    showNotification(data.message || 'An error occurred while fetching the Cashbook.', "error");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+
+                // Re-enable the button and hide the loader in case of error
+                fetchButton.disabled = false;
+                loader.style.display = "none";
+
+                // Display error message in notification div
+                showNotification('An error occurred while fetching the Cashbook.', "error");
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById("notification");
+            notification.innerText = message;
+            notification.classList.remove('error', 'success');
+            notification.classList.add(type);
+            notification.style.display = "block";
+
+            // Set a timeout to hide the notification after 5 seconds (5000 milliseconds)
+            setTimeout(() => {
+                notification.style.display = "none";
+            }, 5000);
+        }
+
+        // Function to get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

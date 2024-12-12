@@ -1,0 +1,209 @@
+<!-- sepa_app/templates/sepa_app/generate_sepa_xml_files.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        #company-dropdown-container {
+            display: none; /* Hide initially */
+        }
+        .small-btn {
+            width: 80px;
+            padding: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .upload-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        .dropzone {
+            border: 2px dashed #0087F7;
+            border-radius: 10px;
+            background: #f0f8ff;
+            padding: 50px;
+            text-align: center;
+            color: #333;
+            font-size: 18px;
+            transition: background 0.3s;
+            cursor: pointer;
+        }
+        .dropzone.dragover {
+            background-color: #e0f7ff;
+        }
+        #selectedFiles {
+            margin-top: 20px;
+            color: #333;
+        }
+        .error {
+            color: red;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .transaction-form {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .transaction-form label {
+            font-weight: 500;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .transaction-form input, .transaction-form select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .submit-btn {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .sepa-btn {
+            background-color: #4CAF50; /* Set a unique color */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .sepa-btn:hover {
+            background-color: #45a049;
+        }
+        /* Styles for the custom dropdown */
+        .dropdown-container {
+            position: relative;
+            margin-bottom: 5px;
+        }
+        .dropdown-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+        .dropdown-list {
+            position: absolute;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none; /* Hidden initially */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .dropdown-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        .dropdown-item:hover {
+            background-color: #f0f0f0;
+        }
+        .recipient {
+            font-weight: bold;
+        }
+        .iban {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Scrollbar Styling for Dropdown */
+        .dropdown-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .dropdown-list::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 4px;
+        }
+        .dropdown-list::-webkit-scrollbar-thumb:hover {
+            background-color: #999;
+        }
+
+        /* Styles for Open PDF Button */
+        .open-pdf-btn {
+            margin-left: 20px;
+            padding: 5px 10px;
+            font-size: 14px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .open-pdf-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <form>
+            <!-- File upload section -->
+            <div class="dropzone" id="dropzone">
+                Drag and drop PDF files here or click to select files.
+            </div>
+            <input type="file" name="pdf_files" id="fileInput" multiple accept="application/pdf" style="display: none;">
+            <div id="selectedFiles"></div>
+
+            <!-- Display errors if there are any -->
+            {% if error %}
+                <div class="error">{{ error }}</div>
+            {% endif %}
+
+            <!-- Dynamic transaction forms based on uploaded files -->
+            <div id="transactionFormsContainer">
+                <!-- Example form fields for transaction data -->
+            </div>
+
+            <div id="company-dropdown-container">
+                <label for="company_name">Select Company Paying the amount</label>
+                <div class="dropdown-container">
+                    <input type="text" id="company_name" name="company_name" class="dropdown-input" placeholder="Select company..." autocomplete="off" required>
+                    <div class="dropdown-list" id="company_dropdown_list"></div>
+                </div>
+            </div>
+
+            <!-- Generate SEPA XML file button -->
+            <div class="submit-btn">
+                <button id="generate-sepa-btn" type="submit" onclick="generateSepaXML()" name="generate_sepa_xml" class="sepa-btn" disabled>Generate SEPA XML File</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
